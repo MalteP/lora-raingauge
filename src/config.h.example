@@ -1,0 +1,40 @@
+#pragma once
+
+// Only one of these settings must be defined
+#define USE_OTAA
+// #define USE_ABP
+
+#ifdef USE_OTAA
+
+// LoRaWAN OTAA AppEUI / JoinEUI, application or join EUI in little endian format (LSB)
+static const u1_t PROGMEM APPEUI[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+// LoRaWAN OTAA DevEUI, device EUI in little endian format (LSB)
+static const u1_t PROGMEM DEVEUI[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+// LoRaWAN OTAA AppKey, application key in big endian format (MSB)
+static const u1_t PROGMEM APPKEY[16] = {0x00, 0x00, 0x00, 0x0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+#endif
+
+#ifdef USE_ABP
+
+// LoRaWAN ABP NwkSKey, network session key in big endian format (MSB)
+static const PROGMEM u1_t NWKSKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+// LoRaWAN ABP AppSKey, application session key in big endian format (MSB)
+static const u1_t PROGMEM APPSKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+// LoRaWAN ABP DevAddr, device address in big endian format (MSB)
+static const u4_t DEVADDR = 0x00000000;
+
+#endif
+
+// TX interval seconds
+#define TX_INTERVAL 900
+
+// TX datarate (will be ignored in OTAA mode)
+#define TX_DATARATE DR_SF7
+
+// Changes until session data is saved to FRAM (to reduce write cycles)
+#define SESSION_SAVE_CHANGES 3
