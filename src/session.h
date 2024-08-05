@@ -11,4 +11,10 @@ void session_changed(bool save_now);
 void session_loop(void);
 void session_resetduty(void);
 
+// Userdata stored in FRAM
+struct session_userdata_t {
+  uint16_t pulsecounter;
+  uint16_t sleepinterval;
+};
+
 #endif

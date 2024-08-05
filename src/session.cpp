@@ -7,6 +7,7 @@
 #include "session.h"
 #include "fram.h"
 #include "pulse.h"
+#include "sleep.h"
 
 // LMIC callbacks for reading OTAA keys
 #ifdef USE_OTAA
@@ -112,15 +113,18 @@ void session_restore(bool rst) {
 
 // Save application specific data (pulse counter value)
 void session_save_extra(void) {
-  uint16_t value = pulse_get();
-  fram_write(SESSION_FRAM_USER_OFFSET, &value, sizeof(uint16_t));
+  session_userdata_t data;
+  data.pulsecounter = pulse_get();
+  data.sleepinterval = sleep_get();
+  fram_write(SESSION_FRAM_USER_OFFSET, &data, sizeof(session_userdata_t));
 }
 
 // Restore application specific data (pulse counter value)
 void session_restore_extra(void) {
-  uint16_t value;
-  if(fram_read(SESSION_FRAM_USER_OFFSET, &value, sizeof(uint16_t))) {
-    pulse_set(value);
+  session_userdata_t data;
+  if(fram_read(SESSION_FRAM_USER_OFFSET, &data, sizeof(session_userdata_t))) {
+    pulse_set(data.pulsecounter);
+    sleep_set(data.sleepinterval);
   }
 }
 

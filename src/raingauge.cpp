@@ -48,6 +48,11 @@ tiny::BME280 bme;
 // Set true if sensor is detected
 bool bme_status;
 
+// Uplink / downlink functions
+bool raingauge_send(void);
+void raingauge_receive(void);
+
+// Global variables
 static uint8_t state = STATE_IDLE;
 static uint32_t delay_counter = 0;
 
@@ -74,6 +79,10 @@ void onEvent(ev_t ev) {
     session_changed(false);
     // Deactivate LED
     led_disable();
+    // Check downlink data
+    if(LMIC.dataLen) {
+      raingauge_receive();
+    }
     state = STATE_SLEEP;
     break;
   case EV_JOIN_TXCOMPLETE:
@@ -87,7 +96,7 @@ void onEvent(ev_t ev) {
   }
 }
 
-// Generate payload and send LoRa packet
+// Generate uplink payload and send LoRa packet
 bool raingauge_send(void) {
   payload_data_t payload;
 
@@ -121,6 +130,26 @@ bool raingauge_send(void) {
   return true;
 }
 
+// Handle downlink payload
+void raingauge_receive(void) {
+  switch(LMIC.frame[LMIC.dataBeg - 1]) {
+  case 1: // fPort 1 - Update sleep interval
+    if(LMIC.dataLen == 2) {
+      uint32_t value = (LMIC.frame[LMIC.dataBeg] << 8) | LMIC.frame[LMIC.dataBeg + 1];
+      sleep_set(value);
+      session_changed(true);
+    }
+    break;
+  case 2: // fPort 2 - Update rain counter
+    if(LMIC.dataLen == 2) {
+      uint16_t value = (LMIC.frame[LMIC.dataBeg] << 8) | LMIC.frame[LMIC.dataBeg + 1];
+      pulse_set(value);
+      session_changed(true);
+    }
+    break;
+  }
+}
+
 // Arduino setup function
 void setup() {
   Serial.begin(115200);
@@ -140,6 +169,9 @@ void setup() {
 
   // Setup rain gauge pulse counter routines
   pulse_setup();
+
+  // Initialize sleep interval
+  sleep_set(TX_INTERVAL);
 
   // Initialize network specific parameters
   session_setup();
@@ -190,7 +222,7 @@ void loop() {
       led_disable();
       Serial.println(F("Go to sleep"));
       Serial.flush();
-      sleep_interval(TX_INTERVAL);
+      sleep_interval();
       // We'll wake up here and check the battery voltage
       if(battery_getvoltage() >= BATT_MIN) {
         // Okay, switch to idle mode to send uplink data soon
