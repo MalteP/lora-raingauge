@@ -12,6 +12,7 @@
 // Values for main state machine
 enum { STATE_JOINING,
        STATE_IDLE,
+       STATE_SEND,
        STATE_SENDING,
        STATE_JOINFAILED,
        STATE_SLEEP };
@@ -108,7 +109,7 @@ bool raingauge_send(void) {
     if(bme_status) {
       // Wake up and read sensor
       bme.setMode(tiny::Mode::FORCED);
-      _delay_ms(15);
+      delay(15);
       payload.temperature = bme.readFixedTempC();
       payload.pressure = bme.readFixedPressure();
 #ifdef SENSOR_BME280
@@ -125,6 +126,7 @@ bool raingauge_send(void) {
     // Activate LED to indicate TX in progress
     led_enable(LED_ON);
   } else {
+    delay(1);
     return false;
   }
   return true;
@@ -164,6 +166,16 @@ void setup() {
   // Initialize battery voltage measurement
   battery_setup();
 
+  // Check if battery voltage is okay
+  if(battery_getvoltage() < BATT_MIN_BOOT) {
+    // Battery voltage too low, maybe we restarted by a BOD reset;
+    // (the BORF flag in MCUCSR is already cleared by the bootloader)
+    // sleep until user inserts fresh batteries to avoid reset loops
+    Serial.println(F("Low battery"));
+    Serial.flush();
+    sleep_forever();
+  }
+
   // Initialize LED
   led_setup();
 
@@ -201,6 +213,16 @@ void loop() {
     // We just do nothing here, state will be changed by LMIC event handler
     break;
   case STATE_IDLE:
+    // Check the battery voltage before sending data
+    if(battery_getvoltage() >= BATT_MIN) {
+      // Okay, send uplink data soon
+      ++state;
+    } else {
+      // Battery empty, go to sleep
+      state = STATE_SLEEP;
+    }
+    break;
+  case STATE_SEND:
     // Prepare uplink packet
     if(raingauge_send()) {
       ++state;
@@ -223,11 +245,8 @@ void loop() {
       Serial.println(F("Go to sleep"));
       Serial.flush();
       sleep_interval();
-      // We'll wake up here and check the battery voltage
-      if(battery_getvoltage() >= BATT_MIN) {
-        // Okay, switch to idle mode to send uplink data soon
-        state = STATE_IDLE;
-      }
+      // We'll wake up here and switch back to idle state
+      state = STATE_IDLE;
     }
     break;
   }

@@ -16,6 +16,11 @@ void sleep_interval(void) {
   } while(--seconds > 0);
 }
 
+// Low power sleep mode forever
+void sleep_forever(void) {
+  LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+}
+
 // Set sleep mode interval
 void sleep_set(uint16_t seconds) {
   sleep_seconds = seconds;
