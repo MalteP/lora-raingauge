@@ -242,10 +242,12 @@ void loop() {
       --delay_counter;
     } else {
       led_disable();
+      session_sleep();
       Serial.println(F("Go to sleep"));
       Serial.flush();
       sleep_interval();
       // We'll wake up here and switch back to idle state
+      session_wakeup();
       state = STATE_IDLE;
     }
     break;

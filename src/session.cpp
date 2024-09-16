@@ -183,3 +183,13 @@ void session_resetduty(void) {
   LMIC.globalDutyAvail = os_getTime();
 #endif
 }
+
+// Called before entering sleep mode
+void session_sleep(void) {
+  fram_sleep();
+}
+
+// Called after wake up from sleep mode
+void session_wakeup(void) {
+  fram_wakeup();
+}

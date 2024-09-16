@@ -105,6 +105,16 @@ bool fram_clear(size_t length) {
   return true;
 }
 
+// Switch FRAM to sleep mode
+void fram_sleep(void) {
+  fram->enterSleep();
+}
+
+// Wake up FRAM from sleep mode
+void fram_wakeup(void) {
+  fram->exitSleep();
+}
+
 // CRC8 checksum calculation
 uint8_t fram_crc8(const uint8_t *data, size_t len) {
   uint8_t crc = 0x00;        // Initial value 0x00
