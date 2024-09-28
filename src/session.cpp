@@ -130,6 +130,8 @@ void session_restore_extra(void) {
 
 // Setup default parameters for a new session
 void session_defaults(void) {
+  // Reset the MAC state again, data structure may have been overwritten by fram_read()
+  LMIC_reset();
   // Set static ABP session parameters
 #ifdef USE_ABP
   uint8_t appskey[sizeof(APPSKEY)];
