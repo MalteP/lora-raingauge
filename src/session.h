@@ -8,7 +8,8 @@
 
 void session_setup(void);
 void session_changed(bool save_now);
-void session_loop(void);
+void session_check_changes(void);
+void session_defaults(void);
 void session_resetduty(void);
 void session_sleep(void);
 void session_wakeup(void);

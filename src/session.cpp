@@ -8,6 +8,7 @@
 #include "fram.h"
 #include "pulse.h"
 #include "sleep.h"
+#include "button.h"
 
 // LMIC callbacks for reading OTAA keys
 #ifdef USE_OTAA
@@ -48,19 +49,10 @@ void session_setup(void) {
   // to invalidate the current session if OTAA keys are changed (see scripts/auto_config_h_checksum.py)
   fram_setmagic(CONFIG_H_CHECKSUM);
 #endif
-
   // Check reset button status
-  pinMode(BUTTON_IO, INPUT_PULLUP);
-  bool key = digitalRead(BUTTON_IO) ? 0 : 1;
+  bool key = button_read();
   // Restore frame counter and session parameters
   session_restore(key);
-
-#ifdef USE_OTAA
-  // Join network if no session is set
-  if(LMIC.devaddr == 0) {
-    LMIC_startJoining();
-  }
-#endif
 }
 
 // Called if session data is changed, may be saved directly
@@ -73,8 +65,8 @@ void session_changed(bool save_now) {
   }
 }
 
-// Called from main loop
-void session_loop(void) {
+// Check it session data should be saved to FRAM
+void session_check_changes(void) {
   if(fram_session_changed >= SESSION_SAVE_CHANGES) {
     fram_session_changed = 0;
     session_save();
@@ -107,6 +99,7 @@ void session_restore(bool rst) {
     }
   } else {
     session_defaults();
+    session_changed(true);
     Serial.println(F("Session reset"));
   }
 }

@@ -1,8 +1,7 @@
 #ifndef BATT_H
 #define BATT_H
 
-#define BATT_MIN 2000      // Minimum battery voltage during operation
-#define BATT_MIN_BOOT 2100 // Minimum battery voltage at startup
+#define BATT_MIN 2000 // Minimum battery voltage
 
 // Functions
 void battery_setup(void);

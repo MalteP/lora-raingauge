@@ -8,13 +8,14 @@
 #include "sleep.h"
 #include "session.h"
 #include "pulse.h"
+#include "button.h"
 
 // Values for main state machine
-enum { STATE_JOINING,
-       STATE_IDLE,
+enum { STATE_IDLE,
        STATE_SEND,
        STATE_SENDING,
        STATE_JOINFAILED,
+       STATE_SHUTDOWN,
        STATE_SLEEP };
 
 // LMIC pin mapping
@@ -54,25 +55,18 @@ bool raingauge_send(void);
 void raingauge_receive(void);
 
 // Global variables
-static uint8_t state = STATE_IDLE;
+static uint8_t state = STATE_SHUTDOWN;
 static uint32_t delay_counter = 0;
 
 // LMIC event handler
 void onEvent(ev_t ev) {
   switch(ev) {
-  case EV_JOINING:
-    // Update main loop state machine, so we won't try to send uplink data right now
-    state = STATE_JOINING;
-    break;
   case EV_JOINED:
     Serial.println(F("Join succeeded"));
     // Disable link check validation
     LMIC_setLinkCheckMode(0);
     // Store session data & frame counter immediately
     session_changed(true);
-    // Deactivate LED
-    led_disable();
-    state = STATE_IDLE;
     break;
   case EV_TXCOMPLETE:
     Serial.println(F("Packet sent"));
@@ -84,7 +78,7 @@ void onEvent(ev_t ev) {
     if(LMIC.dataLen) {
       raingauge_receive();
     }
-    state = STATE_SLEEP;
+    state = STATE_SHUTDOWN;
     break;
   case EV_JOIN_TXCOMPLETE:
     Serial.println(F("Join failed"));
@@ -167,9 +161,8 @@ void setup() {
   battery_setup();
 
   // Check if battery voltage is okay
-  if(battery_getvoltage() < BATT_MIN_BOOT) {
+  if(battery_getvoltage() < BATT_MIN) {
     // Battery voltage too low, maybe we restarted by a BOD reset;
-    // (the BORF flag in MCUCSR is already cleared by the bootloader)
     // sleep until user inserts fresh batteries to avoid reset loops
     Serial.println(F("Low battery"));
     Serial.flush();
@@ -178,6 +171,9 @@ void setup() {
 
   // Initialize LED
   led_setup();
+
+  // Initialize button
+  button_setup();
 
   // Setup rain gauge pulse counter routines
   pulse_setup();
@@ -204,14 +200,9 @@ void setup() {
 // Arduino main loop
 void loop() {
   os_runloop_once();
-  session_loop();
   led_loop();
-
   // Main state machine
   switch(state) {
-  case STATE_JOINING:
-    // We just do nothing here, state will be changed by LMIC event handler
-    break;
   case STATE_IDLE:
     // Check the battery voltage before sending data
     if(battery_getvoltage() >= BATT_MIN) {
@@ -232,9 +223,17 @@ void loop() {
     // We just do nothing here, state will be changed by LMIC event handler
     break;
   case STATE_JOINFAILED:
-    // If join fails, we will go to deep sleep with some delay while the LED blinks
+    // If join fails, reset LMIC and go to deep sleep with some delay while the LED blinks
+    session_defaults();
     delay_counter = 0xffff;
     ++state;
+    break;
+  case STATE_SHUTDOWN:
+    // Wait until all LMIC operations are done and store session data if needed
+    if(LMIC_queryTxReady()) {
+      session_check_changes();
+      ++state;
+    }
     break;
   case STATE_SLEEP:
     // Put everything into low power mode and send MCU to deep sleep
