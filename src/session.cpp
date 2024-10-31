@@ -134,20 +134,20 @@ void session_defaults(void) {
   LMIC_setSession(0x1, DEVADDR, nwkskey, appskey);
   // ABP mode uses a fixed channel config
   session_defaults_abp_channels();
-#endif
 
   // Disable link check validation & ADR
   LMIC_setLinkCheckMode(0);
   LMIC_setAdrMode(false);
-
-  // Compensate for clock skew
-  LMIC_setClockError(MAX_CLOCK_ERROR * 10 / 100);
 
   // Set a few link parameters for The Things Network
   LMIC.rxDelay = 5;                 // Rx1 delay
   LMIC.rx1DrOffset = 0;             // Rx1 datarate offset
   LMIC.dn2Dr = DR_SF9;              // Downlink band
   LMIC_setDrTxpow(TX_DATARATE, 14); // Uplink datarate
+#endif
+
+  // Compensate for clock skew
+  LMIC_setClockError(MAX_CLOCK_ERROR * 10 / 100);
 }
 
 // Setup ABP default channels
