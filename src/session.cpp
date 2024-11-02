@@ -146,8 +146,9 @@ void session_defaults(void) {
   LMIC_setDrTxpow(TX_DATARATE, 14); // Uplink datarate
 #endif
 
-  // Compensate for clock skew
-  LMIC_setClockError(MAX_CLOCK_ERROR * 10 / 100);
+  // Compensate for clock skew >0.4% (LMIC default value) as the resonators only have an accuracy of 0.5%
+  // See: https://github.com/mcci-catena/arduino-lmic#lmic_setclockerror
+  LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
 }
 
 // Setup ABP default channels
