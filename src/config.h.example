@@ -33,7 +33,11 @@ static const u4_t DEVADDR = 0x00000000;
 // TX interval seconds
 #define TX_INTERVAL 900
 
-// TX datarate (will be ignored in OTAA mode)
+// Maximum number of OTAA join attempts before device goes to deep sleep.
+// May need adjustment if data rates other than SF7 should be auto-discovered. Default: 3
+// #define JOIN_RETRIES 3
+
+// TX data rate (will be ignored in OTAA mode)
 #define TX_DATARATE DR_SF7
 
 // Changes until session data is saved to FRAM (to reduce write cycles)

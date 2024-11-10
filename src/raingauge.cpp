@@ -56,7 +56,11 @@ void raingauge_receive(void);
 
 // Global variables
 static uint8_t state = STATE_SHUTDOWN;
-static uint32_t delay_counter = 0;
+static uint8_t join_ctr = 0;
+
+#ifndef JOIN_RETRIES
+  #define JOIN_RETRIES 3
+#endif
 
 // LMIC event handler
 void onEvent(ev_t ev) {
@@ -223,10 +227,16 @@ void loop() {
     // We just do nothing here, state will be changed by LMIC event handler
     break;
   case STATE_JOINFAILED:
-    // If join fails, reset LMIC and go to deep sleep with some delay while the LED blinks
-    session_defaults();
-    delay_counter = 0xffff;
-    ++state;
+    // Try to join a few times before the process is canceled
+    if(++join_ctr < JOIN_RETRIES) {
+      // Wait until LMIC sends another join
+      state = STATE_SENDING;
+    } else {
+      // Max retries reached, reset LMIC and go to deep sleep
+      session_defaults();
+      join_ctr = 0;
+      ++state;
+    }
     break;
   case STATE_SHUTDOWN:
     // Wait until all LMIC operations are done and store session data if needed
@@ -237,18 +247,14 @@ void loop() {
     break;
   case STATE_SLEEP:
     // Put everything into low power mode and send MCU to deep sleep
-    if(delay_counter > 0) {
-      --delay_counter;
-    } else {
-      led_disable();
-      session_sleep();
-      Serial.println(F("Go to sleep"));
-      Serial.flush();
-      sleep_interval();
-      // We'll wake up here and switch back to idle state
-      session_wakeup();
-      state = STATE_IDLE;
-    }
+    led_disable();
+    session_sleep();
+    Serial.println(F("Go to sleep"));
+    Serial.flush();
+    sleep_interval();
+    // We'll wake up here and switch back to idle state
+    session_wakeup();
+    state = STATE_IDLE;
     break;
   }
 }

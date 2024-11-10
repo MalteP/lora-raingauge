@@ -141,9 +141,9 @@ void session_defaults(void) {
 
   // Set a few link parameters for The Things Network
   LMIC.rxDelay = 5;                 // Rx1 delay
-  LMIC.rx1DrOffset = 0;             // Rx1 datarate offset
+  LMIC.rx1DrOffset = 0;             // Rx1 data rate offset
   LMIC.dn2Dr = DR_SF9;              // Downlink band
-  LMIC_setDrTxpow(TX_DATARATE, 14); // Uplink datarate
+  LMIC_setDrTxpow(TX_DATARATE, 14); // Uplink data rate
 #endif
 
   // Compensate for clock skew >0.4% (LMIC default value) as the resonators only have an accuracy of 0.5%
