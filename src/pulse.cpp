@@ -1,13 +1,19 @@
 #include <Arduino.h>
+#include <lmic.h>
+#include "config.h"
 #include "pulse.h"
 
 static uint16_t pulse_ctr;
 
 // Initialize interrupt based pulse counter
 void pulse_setup(void) {
+#ifndef USE_EXTERNAL_PULLUP
   pinMode(PULSE_PIN, INPUT_PULLUP); // Configure pulse input
-  PCICR |= (1 << PCIE2);            // Enable PCINT
-  PCMSK2 |= (1 << PULSE_INT);       // Configure PCINT mask
+#else
+  pinMode(PULSE_PIN, INPUT);
+#endif
+  PCICR |= (1 << PCIE2);      // Enable PCINT
+  PCMSK2 |= (1 << PULSE_INT); // Configure PCINT mask
   pulse_ctr = 0;
 }
 

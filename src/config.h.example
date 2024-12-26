@@ -42,3 +42,6 @@ static const u4_t DEVADDR = 0x00000000;
 
 // Changes until session data is saved to FRAM (to reduce write cycles)
 #define SESSION_SAVE_CHANGES 3
+
+// Disable internal pullup for pulse input if external resistor R3 is populated
+// #define USE_EXTERNAL_PULLUP
