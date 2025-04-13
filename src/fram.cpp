@@ -96,11 +96,11 @@ bool fram_clear(size_t length) {
     return false;
   }
 
-  fram->writeEnable(true);
   for(size_t pos = 0; pos < length; pos++) {
-    fram->write8(--length, 0x00);
+    fram->writeEnable(true);
+    fram->write8(pos, 0xFF);
+    fram->writeEnable(false);
   }
-  fram->writeEnable(false);
 
   return true;
 }
